@@ -78,6 +78,38 @@ Das 217 avaliações negativas no teste, 198 foram identificadas corretamente.
 
 Como há muito mais avaliações positivas, a acurácia sozinha não descreve bem o desempenho. O recall e o F1-score da classe negativa ajudam a avaliar como o modelo se sai com a classe menos frequente.
 
+## Comparação entre modelos
+
+Foram desenvolvidos e avaliados dois modelos de classificação de sentimentos:
+
+1. **Logistic Regression + TF-IDF:** modelo tradicional de Machine Learning, utilizado como referência inicial.
+2. **BERTimbau:** modelo Transformer pré-treinado em português brasileiro, ajustado com fine-tuning para classificação de avaliações.
+
+Ambos foram avaliados no mesmo conjunto de teste, contendo 3.259 avaliações.
+
+| Métrica | Logistic Regression | BERTimbau |
+|---|---:|---:|
+| Acurácia | 95,58% | 97,64% |
+| Precisão negativa | 61% | 80% |
+| Recall negativo | 91% | 86% |
+| F1-score negativo | 0,73 | 0,83 |
+| F1-score positivo | 0,98 | 0,99 |
+
+O BERTimbau apresentou melhor desempenho geral e maior F1-score na classe negativa.
+
+Entretanto, o Logistic Regression obteve recall superior para avaliações negativas, identificando uma proporção maior dos comentários classificados como negativos.
+
+Esses resultados demonstram a importância de avaliar diferentes métricas antes de escolher um modelo para uma aplicação real.
+
+### Modelos publicados
+
+- [FoodReviewAI - Logistic Regression](https://huggingface.co/felipermtrindade/FoodReviewAI-Sentiment)
+- [FoodReviewAI - BERTimbau](https://huggingface.co/felipermtrindade/FoodReviewAI-BERTimbau)
+
+### Notebook de treinamento
+
+O processo de fine-tuning do BERTimbau, incluindo preparação dos dados, tokenização, treinamento e avaliação, está documentado em `notebooks/treinamento_bertimbau.ipynb`.
+
 ## Limitações e próximos passos
 
 A classificação é binária: toda avaliação recebe uma das duas classes, mesmo quando mistura elogios e críticas. O desequilíbrio dos dados também é uma limitação do conjunto usado.
