@@ -1,164 +1,289 @@
-﻿# FoodReviewAI
+﻿# 🍽️ FoodReviewAI
 
-Classificador de avaliações de restaurantes em português. O modelo recebe um comentário e indica se o sentimento é positivo ou negativo. As previsões podem ser consultadas por uma API feita com FastAPI.
+### Análise de sentimentos de avaliações de restaurantes com Machine Learning e Transformers
 
-O projeto reúne a preparação dos dados, o treinamento e a API em Python, usando Pandas, scikit-learn e Joblib.
+O **FoodReviewAI** é um projeto de Engenharia de Inteligência Artificial desenvolvido para classificar avaliações de restaurantes em português como positivas ou negativas.
 
-## Como executar
+O projeto apresenta duas abordagens de Processamento de Linguagem Natural (NLP): um modelo tradicional utilizando **TF-IDF e Logistic Regression** e um modelo **BERTimbau**, ajustado por fine-tuning.
 
-Execute os comandos na raiz do projeto. Primeiro, instale as dependências:
+A solução contempla preparação de dados reais, treinamento, avaliação, comparação entre modelos, API REST e uma aplicação web disponível publicamente.
+
+### 🔗 Links do projeto
+
+- **[Experimentar o FoodReviewAI](https://foodreviewai.streamlit.app/)**
+- [Modelo Logistic Regression - Hugging Face](https://huggingface.co/felipermtrindade/FoodReviewAI-Sentiment)
+- [Modelo BERTimbau - Hugging Face](https://huggingface.co/felipermtrindade/FoodReviewAI-BERTimbau)
+
+## Tecnologias utilizadas
+
+| Tecnologia | Aplicação |
+|---|---|
+| Python | Desenvolvimento principal |
+| Pandas | Preparação e análise de dados |
+| scikit-learn | TF-IDF, Logistic Regression e métricas |
+| PyTorch | Treinamento do Transformer |
+| Hugging Face Transformers | Fine-tuning e inferência do BERTimbau |
+| Hugging Face Hub | Publicação e distribuição dos modelos |
+| FastAPI | API REST para classificação |
+| Streamlit | Interface web interativa |
+| Google Colab | Treinamento do BERTimbau utilizando GPU |
+
+## Dataset e preparação dos dados
+
+Os dados utilizados são provenientes do [StarRest](https://data.mendeley.com/datasets/r5th4s7vpv/2), conjunto de avaliações de restaurantes brasileiros.
+
+O dataset original possui 37.642 registros.
+
+Durante a preparação, foram aplicados os seguintes critérios:
+
+- Seleção de comentários em português.
+- Utilização das plataformas identificadas pelos IDs 1, 2 e 3.
+- Exclusão de avaliações com nota 3.
+- Remoção de textos vazios ou duplicados.
+- Classificação de notas 1 e 2 como negativas e notas 4 e 5 como positivas.
+
+Após o tratamento, o dataset ficou com **16.293 avaliações**.
+
+| Sentimento | Quantidade | Proporção |
+|---|---:|---:|
+| Positivo | 15.207 | 93,3% |
+| Negativo | 1.086 | 6,7% |
+| **Total** | **16.293** | **100%** |
+
+O desequilíbrio entre as classes foi considerado durante o treinamento e a avaliação dos modelos.
+
+Os rótulos de sentimento foram derivados das notas atribuídas pelos usuários, e não de uma classificação manual dos textos.
+
+## Modelos desenvolvidos
+
+### 1. Logistic Regression + TF-IDF
+
+O primeiro modelo foi desenvolvido como referência inicial (*baseline*), utilizando técnicas tradicionais de Machine Learning.
+
+**Configuração:**
+
+- TF-IDF com unigramas e bigramas.
+- Limite de 10.000 atributos.
+- Logistic Regression com `class_weight="balanced"`.
+- Divisão estratificada de 80% para treinamento e 20% para teste.
+- `random_state=42`.
+
+O modelo completo, incluindo o processamento dos textos, foi salvo utilizando Joblib.
+
+Essa abordagem apresenta baixo consumo de recursos e permite realizar previsões rapidamente.
+
+### 2. BERTimbau - Fine-tuning
+
+O segundo modelo utiliza o [BERTimbau Base](https://huggingface.co/neuralmind/bert-base-portuguese-cased), um Transformer pré-treinado em português brasileiro.
+
+O modelo foi ajustado para classificação binária de sentimentos utilizando PyTorch e Hugging Face Transformers.
+
+**Configuração do treinamento:**
+
+| Parâmetro | Valor |
+|---|---|
+| Modelo base | BERTimbau Base |
+| Épocas | 2 |
+| Learning rate | 2e-5 |
+| Batch size de treinamento | 16 |
+| Batch size de avaliação | 32 |
+| Comprimento máximo | 128 tokens |
+| Balanceamento | Weighted Cross-Entropy |
+| Métrica para seleção | F1-score da classe negativa |
+| Hardware | NVIDIA Tesla T4 |
+
+O treinamento foi realizado no Google Colab.
+
+Foram utilizados 11.730 exemplos para treinamento, 1.304 para validação e 3.259 para teste.
+
+A seleção do melhor checkpoint considerou o F1-score da classe negativa no conjunto de validação.
+
+O processo completo está documentado em:
+
+`notebooks/treinamento_bertimbau.ipynb`
+
+## Resultados e comparação
+
+Ambos os modelos foram avaliados no mesmo conjunto de teste, contendo 3.259 avaliações que não participaram do treinamento.
+
+| Métrica | Logistic Regression | BERTimbau |
+|---|---:|---:|
+| Acurácia | 95,58% | **97,64%** |
+| Precisão negativa | 0,61 | **0,80** |
+| Recall negativo | **0,91** | 0,86 |
+| F1-score negativo | 0,73 | **0,83** |
+| F1-score positivo | 0,98 | **0,99** |
+
+### Matrizes de confusão
+
+**Logistic Regression**
+
+| | Prevista negativa | Prevista positiva |
+|---|---:|---:|
+| Real negativa | 198 | 19 |
+| Real positiva | 125 | 2.917 |
+
+**BERTimbau**
+
+| | Prevista negativa | Prevista positiva |
+|---|---:|---:|
+| Real negativa | 186 | 31 |
+| Real positiva | 46 | 2.996 |
+
+### Análise dos resultados
+
+O BERTimbau apresentou melhor acurácia, precisão e F1-score na identificação de avaliações negativas.
+
+Entretanto, o Logistic Regression apresentou recall superior nessa classe, identificando 198 das 217 avaliações negativas, enquanto o BERTimbau identificou 186.
+
+Isso demonstra que a escolha de um modelo depende das necessidades da aplicação.
+
+Em um sistema voltado para identificar o maior número possível de clientes insatisfeitos, o recall negativo pode ser especialmente importante.
+
+Já em aplicações nas quais falsos alarmes representam um custo maior, a precisão pode receber mais atenção.
+
+A comparação evidencia a importância de avaliar múltiplas métricas, principalmente em conjuntos de dados desbalanceados.
+
+## API REST - FastAPI
+
+O projeto disponibiliza uma API REST para integração dos modelos com outras aplicações.
+
+A API permite selecionar o modelo responsável pela classificação.
+
+**Endpoint:** `POST /prever`
+
+Exemplo de requisição:
+
+```json
+{
+  "texto": "A comida chegou fria e o atendimento foi péssimo.",
+  "modelo": "bert"
+}
+```
+
+Exemplo de resposta obtida nos testes:
+
+```json
+{
+  "modelo": "bert",
+  "sentimento": "Negativa",
+  "confianca": 0.999
+}
+```
+
+O parâmetro `modelo` aceita os valores `logistic` e `bert`. Quando não informado, o modelo padrão é Logistic Regression.
+
+O campo `confianca` representa a probabilidade estimada pelo modelo para a classe prevista. Esse valor não deve ser interpretado como uma garantia de acerto.
+
+## Interface Web - Streamlit
+
+O FoodReviewAI possui uma interface interativa que permite:
+
+- Digitar avaliações de restaurantes em português.
+- Selecionar entre Logistic Regression e BERTimbau.
+- Visualizar a classificação positiva ou negativa.
+- Consultar a confiança estimada pelo modelo.
+
+A aplicação está publicada no Streamlit Community Cloud.
+
+**[Acessar demonstração pública](https://foodreviewai.streamlit.app/)**
+
+A versão publicada carrega os modelos diretamente do Hugging Face, sem precisar executar a API separadamente.
+
+## Como executar localmente
+
+### 1. Clonar o repositório
+
+```bash
+git clone https://github.com/felipemtrindade/FoodReviewAI.git
+cd FoodReviewAI
+```
+
+### 2. Criar o ambiente virtual
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+No Windows PowerShell, a ativação é feita com `.venv\Scripts\Activate.ps1`.
+
+### 3. Instalar as dependências
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Coloque o arquivo original do dataset em `data/comentarios.csv`. Depois, prepare os dados e treine o modelo:
+Recomenda-se utilizar Python 3.12.
+
+### 4. Preparar os dados e treinar o modelo tradicional
+
+Baixe o dataset StarRest e coloque o arquivo original em `data/comentarios.csv`.
+
+Execute:
 
 ```bash
 python src/preparar_dados.py
 python src/treinar_modelo.py
 ```
 
-O treinamento salva o modelo em `models/foodreview_model.pkl` e exibe as métricas no terminal. Com o modelo salvo, inicie a API:
+O treinamento criará o arquivo:
+
+`models/foodreview_model.pkl`
+
+O BERTimbau não precisa ser treinado novamente para utilização, pois seus pesos ajustados estão disponíveis no Hugging Face.
+
+### 5. Executar a API
 
 ```bash
 uvicorn api.main:app --reload
 ```
 
-A documentação interativa fica em [localhost:8000/docs](http://localhost:8000/docs).
+Documentação interativa:
 
-## Uso da API
+http://localhost:8000/docs
 
-Envie o texto da avaliação para `POST /prever`:
+### 6. Executar a interface local
 
-```json
-{
-  "texto": "A comida chegou fria e o atendimento foi péssimo."
-}
-```
-
-Exemplo de resposta:
-
-```json
-{
-  "sentimento": "Negativa",
-  "confianca": 0.8586
-}
-```
-
-O campo `confianca` contém a probabilidade atribuída pelo modelo à classe prevista.
-
-## Dados e treinamento
-
-As avaliações vêm do [StarRest](https://data.mendeley.com/datasets/r5th4s7vpv/2), um dataset de avaliações de restaurantes brasileiros.
-
-Na preparação, são mantidos os comentários em português das plataformas com IDs 1, 2 e 3. Notas 1 e 2 são consideradas negativas; notas 4 e 5, positivas. Avaliações com nota 3, registros sem texto e textos duplicados são descartados.
-
-Após esse tratamento, o conjunto utilizado ficou com 16.293 avaliações:
-
-- 15.207 positivas;
-- 1.086 negativas.
-
-O modelo usa TF-IDF com palavras isoladas e pares de palavras, limitado a 10.000 atributos, seguido de regressão logística. O parâmetro `class_weight="balanced"` ajusta os pesos das classes para lidar com a diferença de quantidade entre avaliações positivas e negativas.
-
-A divisão dos dados reserva 80% para treino e 20% para teste, mantendo a proporção das classes e usando `random_state=42`.
-
-## Resultados
-
-Resultados registrados no conjunto de teste:
-
-| Métrica | Resultado |
-| --- | --- |
-| Acurácia | 95,6% |
-| Recall da classe negativa | 91% |
-| F1-score da classe negativa | 0,73 |
-| F1-score da classe positiva | 0,98 |
-
-Das 217 avaliações negativas no teste, 198 foram identificadas corretamente.
-
-Como há muito mais avaliações positivas, a acurácia sozinha não descreve bem o desempenho. O recall e o F1-score da classe negativa ajudam a avaliar como o modelo se sai com a classe menos frequente.
-
-## Comparação entre modelos
-
-Foram desenvolvidos e avaliados dois modelos de classificação de sentimentos:
-
-1. **Logistic Regression + TF-IDF:** modelo tradicional de Machine Learning, utilizado como referência inicial.
-2. **BERTimbau:** modelo Transformer pré-treinado em português brasileiro, ajustado com fine-tuning para classificação de avaliações.
-
-Ambos foram avaliados no mesmo conjunto de teste, contendo 3.259 avaliações.
-
-| Métrica | Logistic Regression | BERTimbau |
-|---|---:|---:|
-| Acurácia | 95,58% | 97,64% |
-| Precisão negativa | 61% | 80% |
-| Recall negativo | 91% | 86% |
-| F1-score negativo | 0,73 | 0,83 |
-| F1-score positivo | 0,98 | 0,99 |
-
-O BERTimbau apresentou melhor desempenho geral e maior F1-score na classe negativa.
-
-Entretanto, o Logistic Regression obteve recall superior para avaliações negativas, identificando uma proporção maior dos comentários classificados como negativos.
-
-Esses resultados demonstram a importância de avaliar diferentes métricas antes de escolher um modelo para uma aplicação real.
-
-### Modelos publicados
-
-- [FoodReviewAI - Logistic Regression](https://huggingface.co/felipermtrindade/FoodReviewAI-Sentiment)
-- [FoodReviewAI - BERTimbau](https://huggingface.co/felipermtrindade/FoodReviewAI-BERTimbau)
-
-### Notebook de treinamento
-
-O processo de fine-tuning do BERTimbau, incluindo preparação dos dados, tokenização, treinamento e avaliação, está documentado em `notebooks/treinamento_bertimbau.ipynb`.
-
-## Interface Web - Streamlit
-
-O FoodReviewAI possui uma interface web desenvolvida com Streamlit para classificação interativa de avaliações de restaurantes.
-
-A aplicação permite:
-
-- Inserir avaliações escritas em português.
-- Selecionar entre Logistic Regression e BERTimbau.
-- Visualizar o sentimento identificado.
-- Consultar a confiança estimada pelo modelo.
-
-### Executando a aplicação
-
-Primeiro, inicie a API FastAPI:
-
-```bash
-uvicorn api.main:app --reload
-```
-
-Em outro terminal, com o ambiente virtual ativado, execute:
+Com a API em execução, abra outro terminal e execute:
 
 ```bash
 streamlit run app/streamlit_app.py
 ```
 
-A interface estará disponível em `http://localhost:8501`.
+Acesse:
 
-**Observação:** a interface depende da API FastAPI em execução na porta 8000.
+http://localhost:8501
 
-### Modelos disponíveis
+A interface local utiliza a API FastAPI, enquanto a versão pública no Streamlit Cloud utiliza os modelos diretamente.
 
-- **Logistic Regression:** modelo tradicional com TF-IDF, rápido e leve.
-- **BERTimbau:** Transformer ajustado com avaliações de restaurantes em português.
+## Limitações
 
-O BERTimbau apresentou melhor F1-score para avaliações negativas no conjunto de teste, enquanto o Logistic Regression apresentou recall negativo superior.
+O FoodReviewAI ainda apresenta limitações importantes:
 
-## Limitações e próximos passos
-
-O FoodReviewAI apresenta algumas limitações:
-
-- A classificação é binária, mesmo quando uma avaliação mistura elogios e críticas.
-- O dataset possui um desequilíbrio significativo entre avaliações positivas e negativas.
-- Os modelos foram avaliados utilizando dados do mesmo dataset empregado no treinamento.
+- O dataset contém aproximadamente 93% de avaliações positivas.
+- Os rótulos foram derivados das notas, podendo existir diferenças entre a nota e o sentimento expresso no texto.
+- A classificação é binária e pode apresentar dificuldades com avaliações neutras ou sentimentos mistos.
+- O BERTimbau limita as entradas a 128 tokens, truncando textos maiores.
+- Os resultados foram obtidos em um conjunto de teste separado, mas proveniente da mesma fonte de dados utilizada no treinamento.
+- Os modelos ainda não foram avaliados com um dataset externo independente.
+- As probabilidades apresentadas não passaram por calibração específica.
 - O BERTimbau exige mais memória e processamento que o Logistic Regression.
 
-### Melhorias planejadas
+## Melhorias planejadas
 
-- Realizar uma análise detalhada dos erros de classificação.
 - Implementar testes automatizados.
-- Preparar a aplicação para execução com Docker.
-- Disponibilizar uma demonstração pública no Hugging Face Spaces.
-- Avaliar os modelos utilizando outros conjuntos de dados.
+- Realizar uma análise detalhada dos erros de classificação.
+- Avaliar os modelos em outros datasets.
+- Comparar tempo de inferência e consumo de memória.
+- Melhorar o tratamento de avaliações ambíguas.
+- Adicionar uma configuração Docker para execução reproduzível.
+
+## Referências
+
+- [StarRest - Mendeley Data](https://data.mendeley.com/datasets/r5th4s7vpv/2)
+- [BERTimbau - NeuralMind](https://huggingface.co/neuralmind/bert-base-portuguese-cased)
+- [scikit-learn](https://scikit-learn.org/)
+- [Hugging Face Transformers](https://huggingface.co/docs/transformers/)
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [Streamlit](https://streamlit.io/)
