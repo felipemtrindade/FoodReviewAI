@@ -110,8 +110,55 @@ Esses resultados demonstram a importância de avaliar diferentes métricas antes
 
 O processo de fine-tuning do BERTimbau, incluindo preparação dos dados, tokenização, treinamento e avaliação, está documentado em `notebooks/treinamento_bertimbau.ipynb`.
 
+## Interface Web - Streamlit
+
+O FoodReviewAI possui uma interface web desenvolvida com Streamlit para classificação interativa de avaliações de restaurantes.
+
+A aplicação permite:
+
+- Inserir avaliações escritas em português.
+- Selecionar entre Logistic Regression e BERTimbau.
+- Visualizar o sentimento identificado.
+- Consultar a confiança estimada pelo modelo.
+
+### Executando a aplicação
+
+Primeiro, inicie a API FastAPI:
+
+```bash
+uvicorn api.main:app --reload
+```
+
+Em outro terminal, com o ambiente virtual ativado, execute:
+
+```bash
+streamlit run app/streamlit_app.py
+```
+
+A interface estará disponível em `http://localhost:8501`.
+
+**Observação:** a interface depende da API FastAPI em execução na porta 8000.
+
+### Modelos disponíveis
+
+- **Logistic Regression:** modelo tradicional com TF-IDF, rápido e leve.
+- **BERTimbau:** Transformer ajustado com avaliações de restaurantes em português.
+
+O BERTimbau apresentou melhor F1-score para avaliações negativas no conjunto de teste, enquanto o Logistic Regression apresentou recall negativo superior.
+
 ## Limitações e próximos passos
 
-A classificação é binária: toda avaliação recebe uma das duas classes, mesmo quando mistura elogios e críticas. O desequilíbrio dos dados também é uma limitação do conjunto usado.
+O FoodReviewAI apresenta algumas limitações:
 
-Os próximos passos previstos são analisar os erros, comparar o resultado com modelos Transformers, adicionar testes automatizados, preparar uma imagem Docker e publicar o modelo no Hugging Face.
+- A classificação é binária, mesmo quando uma avaliação mistura elogios e críticas.
+- O dataset possui um desequilíbrio significativo entre avaliações positivas e negativas.
+- Os modelos foram avaliados utilizando dados do mesmo dataset empregado no treinamento.
+- O BERTimbau exige mais memória e processamento que o Logistic Regression.
+
+### Melhorias planejadas
+
+- Realizar uma análise detalhada dos erros de classificação.
+- Implementar testes automatizados.
+- Preparar a aplicação para execução com Docker.
+- Disponibilizar uma demonstração pública no Hugging Face Spaces.
+- Avaliar os modelos utilizando outros conjuntos de dados.
