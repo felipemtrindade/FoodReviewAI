@@ -1,5 +1,7 @@
 ﻿# 🍽️ FoodReviewAI
 
+[![FoodReviewAI Tests](https://github.com/felipemtrindade/FoodReviewAI/actions/workflows/tests.yml/badge.svg)](https://github.com/felipemtrindade/FoodReviewAI/actions/workflows/tests.yml)
+
 ### Análise de sentimentos de avaliações de restaurantes com Machine Learning e Transformers
 
 O **FoodReviewAI** é um projeto de Engenharia de Inteligência Artificial desenvolvido para classificar avaliações de restaurantes em português como positivas ou negativas.
@@ -256,6 +258,41 @@ Acesse:
 http://localhost:8501
 
 A interface local utiliza a API FastAPI, enquanto a versão pública no Streamlit Cloud utiliza os modelos diretamente.
+
+## Testes automatizados
+
+O FoodReviewAI utiliza **pytest** para verificar o funcionamento da API.
+
+Foram implementados seis testes que verificam:
+
+- Seleção do modelo padrão.
+- Classificação positiva.
+- Integração da API com o BERTimbau simulado.
+- Rejeição de avaliações vazias.
+- Rejeição de modelos inválidos.
+- Obrigatoriedade do campo de texto.
+
+Os testes utilizam simulações das previsões dos modelos, permitindo validar a lógica da API sem carregar os pesos do BERTimbau.
+
+### Executando os testes
+
+Instale as dependências de desenvolvimento:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+Execute:
+
+```bash
+python -m pytest tests/ -v
+```
+
+### Integração contínua
+
+O projeto utiliza **GitHub Actions** para executar os testes automaticamente a cada push ou pull request para a branch `main`.
+
+O workflow está disponível em `.github/workflows/tests.yml`.
 
 ## Limitações
 
