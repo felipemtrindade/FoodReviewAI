@@ -1,0 +1,10 @@
+-r requirements.txt
+
+pytest
+httpx
+jupyter
+matplotlib
+seaborn
+datasets
+accelerate
+evaluate
