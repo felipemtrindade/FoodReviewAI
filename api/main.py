@@ -1,7 +1,7 @@
 import joblib
 from functools import lru_cache
 from fastapi import FastAPI
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Literal
 
 app = FastAPI(title="FoodReviewAI", version="2.0")
@@ -11,6 +11,16 @@ modelo_ml = joblib.load("models/foodreview_model.pkl")
 class Avaliacao(BaseModel):
     texto: str
     modelo: Literal["logistic", "bert"] = "logistic"
+
+    @field_validator("texto")
+    @classmethod
+    def validar_texto(cls, texto):
+        texto = texto.strip()
+
+        if not texto:
+            raise ValueError("A avaliação não pode estar vazia")
+
+        return texto
 
 @lru_cache(maxsize=1)
 def carregar_bert():

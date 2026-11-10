@@ -7,3 +7,5 @@ models/*.pkl
 
 .ipynb_checkpoints/
 .env
+.pytest_cache/
+.coverage
