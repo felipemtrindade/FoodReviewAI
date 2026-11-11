@@ -324,3 +324,7 @@ O FoodReviewAI ainda apresenta limitações importantes:
 - [Hugging Face Transformers](https://huggingface.co/docs/transformers/)
 - [FastAPI](https://fastapi.tiangolo.com/)
 - [Streamlit](https://streamlit.io/)
+
+## Demonstração
+
+![FoodReviewAI em execução](assets/foodreviewai-demo.png)
